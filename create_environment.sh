@@ -1,40 +1,46 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 # Ask for the user's name
-read -p "Enter your name: " yourname
+echo "Enter your name:"
+read yourName
 
-parent_dir="submission_remainder_${yourname}"
-mkdir -p "$parent_dir"
+# Create the main directory
+main_dir="submission_reminder_${yourName}"
+mkdir -p "$main_dir"
 
 # Create the subdirectories
- mkdir -p "$main_dir/app"
- mkdir -p "$main_dir/modules"
- mkdir -p "$main_dir/assets"
- mkdir -p "$main_dir/config"
+mkdir -p "$main_dir/app"
+mkdir -p "$main_dir/modules"
+mkdir -p "$main_dir/assets"
+mkdir -p "$main_dir/config"
+
+# Create and populate the files
 
 # config.env
- cat <<EOL > "$main_dir/config/config.env"
+cat <<EOL > "$main_dir/config/config.env"
 # This is the config file
- ASSIGNMENT="Shell Navigation"
- DAYS_REMAINING=2
- EOL
+ASSIGNMENT="Shell Navigation"
+DAYS_REMAINING=2
+EOL
 
 # reminder.sh
-#!/bin/bash
+cat <<EOL > "$main_dir/app/reminder.sh"
+#!/usr/bin/env bash
 
 # Source environment variables and helper functions
-source ./config/config.env
-source ./modules/functions.sh
+source ../config/config.env
+source ../modules/functions.sh
 
 # Path to the submissions file
-submissions_file="./assets/submissions.txt"
+submissions_file="../assets/submissions.txt"
 
 # Print remaining time and run the reminder function
-echo "Assignment: $ASSIGNMENT"
-echo "Days remaining to submit: $DAYS_REMAINING days"
+echo "Assignment: \$ASSIGNMENT"
+echo "Days remaining to submit: \$DAYS_REMAINING days"
 echo "--------------------------------------------"
 
-check_submissions $submissions_file
+check_submissions \$submissions_file
+EOL
 
 # functions.sh
 cat <<EOL > "$main_dir/modules/functions.sh"
@@ -43,14 +49,16 @@ cat <<EOL > "$main_dir/modules/functions.sh"
 function check_submissions {
     local submissions_file=\$1
     echo "Checking submissions in \$submissions_file"
-	# Skip the header and iterate through the lines
-	  while IFS=, read -r student assignment status; do
-	             # Remove leading and trailing whitespace
-		     student=\$(echo "\$student" | xargs)
+
+    # Skip the header and iterate through the lines
+    while IFS=, read -r student assignment status; do
+        # Remove leading and trailing whitespace
+        student=\$(echo "\$student" | xargs)
         assignment=\$(echo "\$assignment" | xargs)
         status=\$(echo "\$status" | xargs)
-# Check if assignment matches and status is 'not submitted'
-if [[ "\$assignment" == "\$ASSIGNMENT" && "\$status" == "not submitted" ]]; then
+
+        # Check if assignment matches and status is 'not submitted'
+        if [[ "\$assignment" == "\$ASSIGNMENT" && "\$status" == "not submitted" ]]; then
             echo "Reminder: \$student has not submitted the \$ASSIGNMENT assignment!"
         fi
     done < <(tail -n +2 "\$submissions_file") # Skip the header
@@ -64,6 +72,11 @@ Chinemerem, Shell Navigation, not submitted
 Chiagoziem, Git, submitted
 Divine, Shell Navigation, not submitted
 Anissa, Shell Basics, submitted
+John, Shell Navigation, submitted
+Jane, git, not submitted
+Kevin, Shell Basics, not submitted
+Faith, Git, submitted
+Mary, Shell Navigation, not submitted
 EOL
 
 # startup.sh
@@ -77,8 +90,9 @@ source ./modules/functions.sh
 # Load configuration
 source ./config/config.env
 
-## Start reminder script
+# Start reminder script
 ./app/reminder.sh
+EOL
 
 # Make the scripts executable
 chmod +x "$main_dir/app/reminder.sh"
