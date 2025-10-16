@@ -1,38 +1,39 @@
-#!/bin/bash
+#!/usr/bin/bash
+#Prompts the user to enter the assignment name, then the new input will replace the current name in config/config.env on the ASSIGNMENT
+#check if the file config/config.env exists
+read -p "Enter name of the directory you created: " yourname
+app_dir="submission_reminder_$yourname"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+FULL_APP_DIR="$SCRIPT_DIR/$app_dir"
+echo "$FULL_APP_DIR"
+cd $FULL_APP_DIR
 
-# Define the main directory
-main_dir="submission_reminder_community"
-
-# Check if environment exists
-if [ ! -d "$main_dir" ]; then
-	    echo "Error: File does not exist."
-	        exit 1
+if [[ ! -d "$FULL_APP_DIR" ]]; then
+    echo "Error! App's main directory does not exist"
+    exit 1
 fi
 
-# Ask for assignment name
-echo "Please enter assignment name:"
-read assignment_name
+if [  ! -f "$FULL_APP_DIR/config/config.env"  ];then
+        echo "Error! File does not exist"
+        exit 1
+fi
 
-# Update config file
-echo "assignment=$assignment_name" > "$main_dir/config/config_env"
-echo "Assignment updated to: $assignment_name"
+#asking for the user input on the new assignment
+read -p "Enter name of the assignment: " new_assignment
+if [[ -z "$new_assignment" ]]; then
+    echo "Error! New assignment name cannot be empty"
+    exit 1
+fi
 
-echo ""
-echo "=== Checking submissions for: $assignment_name ==="
+#replace user input with the current name in config/config.env in row2
+escaped_assignment=$(printf '%s\n' "$assignment" | sed 's/[\/&]/\\&/g')
+sed -i "s/ASSIGNMENT=\".*\"/ASSIGNMENT=\"$new_assignment\"/" config/config.env
+echo "Asignment updated successfully to: $new_assignment"
 
-# Use grep to find students who have not submitted
-echo "Students who haven't submitted:"
-grep -i "$assignment_name" "$main_dir/assets/submissions.txt" | grep "not submitted" | while IFS=',' read -r student assignment status; do
-    student_clean=$(echo "$student" | xargs)
-    echo "$student_clean"
-done
+#rerun the startup.sh to check the changes in assignment and submission status
+if [[ ! -f startup.sh ]]; then
+    echo "Error! Startup.sh file cannot be found and cannot rerun the app"
+    exit 1
+fi
 
-# Count total for this assignment
-total_assignment=$(grep -i "$assignment_name" "$main_dir/assets/submissions.txt" | wc -l)
-not_submitted=$(grep -i "$assignment_name" "$main_dir/assets/submissions.txt" | grep -i "not submitted" | wc -l)
-
-echo ""
-echo "=== SUMMARY ==="
-echo "Total students with '$assignment_name': $total_assignment"
-echo "Not submitted: $not_submitted"
-echo "Submitted: $((total_assignment - not_submitted))"
+./startup.sh
