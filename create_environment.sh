@@ -82,6 +82,7 @@ Faith, shell Basics, submitted
 Antony, Shell Navigation, not submitted
 David, Git, not submitted
 Alvin, Shell Basics, submitted
+EOL
 
 # Make all .sh files executable
 find "$base_dir" -type f -name "*.sh" -exec chmod +x {} \;
